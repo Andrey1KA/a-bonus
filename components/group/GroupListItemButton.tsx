@@ -1,41 +1,60 @@
-import React from 'react'
-import { Pressable, StyleSheet, Text } from 'react-native'
+import React from 'react';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 export type Group = {
-    id: string
-    name: string
-}
+  id: string;
+  name: string;
+};
 
-const GroupListItemButton = ({ id, name, isSelected, setSelectedGroupId }: Group & {
-    isSelected: boolean
-    setSelectedGroupId: (id: string) => void
-}) => {
-    return (
-        <Pressable style={[styles.container, isSelected ? { backgroundColor: '#6766AA', borderWidth: 0 } : {}]}
-            onPress={() => setSelectedGroupId(id)}
-        >
-            <Text style={[styles.text, isSelected ? { color: '#FFFFFF' } : {}]}>{name}</Text>
-        </Pressable>
-    )
-}
+const TAB_PURPLE = '#6766AA';
 
-export default GroupListItemButton
+type Props = Group & {
+  isSelected: boolean;
+  setSelectedGroupId: (id: string) => void;
+  colors: {
+    background: string;
+    border: string;
+    placeholder: string;
+    text: string;
+  };
+};
+
+const GroupListItemButton = ({ id, name, isSelected, setSelectedGroupId, colors }: Props) => {
+  return (
+    <Pressable
+      onPress={() => setSelectedGroupId(id)}
+      style={[
+        styles.pill,
+        {
+          backgroundColor: isSelected ? TAB_PURPLE : colors.background,
+          borderColor: isSelected ? TAB_PURPLE : colors.border,
+        },
+      ]}>
+      <Text
+        style={[styles.pillText, { color: isSelected ? '#fff' : colors.placeholder }]}
+        numberOfLines={1}>
+        {name}
+      </Text>
+    </Pressable>
+  );
+};
+
+export default GroupListItemButton;
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 8,
-        margin: 4,
-        borderColor: "#A0A0A0",
-        borderWidth: 1,
-        borderRadius: 100,
-        paddingHorizontal: 16,
-        maxHeight: 40,
-        minHeight: 40,
-        justifyContent: 'center'
-    },
-    text: {
-        fontSize: 14,
-        fontWeight: 500,
-        color: "#A0A0A0"
-    }
-})
+  pill: {
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 26,
+    borderWidth: 1,
+    maxWidth: 200,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pillText: {
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});

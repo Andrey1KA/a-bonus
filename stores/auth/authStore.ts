@@ -5,6 +5,8 @@ import { persistReducer, persistStore } from 'redux-persist';
 export interface User {
     id: string;
     role: 'student' | 'teacher';
+    /** Логин с экрана входа (для демо-моков, если creds ещё не rehydrated). */
+    login?: string | null;
 }
 
 interface UserCredentials {
@@ -63,3 +65,5 @@ export const store = configureStore({
 });
 
 export const persistor = persistStore(store);
+
+export type RootState = ReturnType<typeof store.getState>;

@@ -1,0 +1,25 @@
+/** Парсинг дд.мм.гг / дд.мм.гггг → ISO `YYYY-MM-DD`. */
+export function parseDdMmYyToIso(input: string): string | null {
+  const t = input.trim();
+  const m = t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/);
+  if (!m) return null;
+  const d = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  let y = parseInt(m[3], 10);
+  if (y < 100) y += 2000;
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+export function todayIsoLocal(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+}
+
+export function buildTaskRewardLine(coins: string, expLead: string): string {
+  const c = coins.trim();
+  const e = expLead.trim();
+  const coinPart = c ? `${c} коинов` : '0 коинов';
+  if (e) return `${coinPart} + ${e} EXP первым трем!`;
+  return coinPart;
+}

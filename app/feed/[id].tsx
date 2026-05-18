@@ -2,10 +2,12 @@ import { useProjectFeed } from '@/contexts/ProjectFeedContext';
 import {
   getMockCommentsForProject,
   getProjectDetailDescription,
+  getProjectFeedItemById,
   type ProjectComment,
 } from '@/services/feed/mockProjectFeed';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { userSelector } from '@/stores/auth/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -22,23 +24,28 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
-/** Акцент и кнопки — как в макете «Подробнее о проекте». */
-const ACCENT = '#6B6EB2';
+/** Акцент и кнопки — как в приложении / макете ленты. */
+const ACCENT = '#6766AA';
 const LIKE_PILL_BG = '#E8E6F4';
 
 export default function ProjectFeedDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string | string[] }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { items: feedItems, toggleLike, isLiked, getLikeCount } = useProjectFeed();
+  const user = useSelector(userSelector);
+  const isTeacher = String(user?.role ?? '').toLowerCase() === 'teacher';
+  const { items: feedItems, toggleLike, isLiked, getLikeCount, hideProject, isProjectHidden } =
+    useProjectFeed();
 
-  const project = useMemo(
-    () => (id ? feedItems.find((p) => p.id === id) : undefined),
-    [id, feedItems]
-  );
+  const project = useMemo(() => {
+    if (!id || isProjectHidden(id)) return undefined;
+    return feedItems.find((p) => p.id === id) ?? getProjectFeedItemById(id);
+  }, [id, feedItems, isProjectHidden]);
   const description = useMemo(
     () => (project ? getProjectDetailDescription(project) : ''),
     [project]
@@ -60,6 +67,30 @@ export default function ProjectFeedDetailScreen() {
     ]);
     setDraft('');
   }, [draft]);
+
+  const openProject = useCallback(() => {
+    Alert.alert(
+      'К проекту',
+      'Ссылка на материалы проекта появится после подключения к серверу.'
+    );
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    if (!project) return;
+    Alert.alert('Удалить проект?', `«${project.title}» будет убран из списка.`, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: () => {
+          hideProject(project.id);
+          router.back();
+        },
+      },
+    ]);
+  }, [project, hideProject, router]);
+
+  const canDelete = project ? isTeacher || project.isMine : false;
 
   if (!project) {
     return (
@@ -159,6 +190,12 @@ export default function ProjectFeedDetailScreen() {
                 <Ionicons name="send" size={20} color="#FFFFFF" />
               </Pressable>
             </View>
+
+            <Text style={[styles.visibilityNote, { color: colors.placeholder }]}>
+              {project.inMyGroup
+                ? 'Проект видят только ученики группы.'
+                : 'Проект видят все ученики.'}
+            </Text>
           </ScrollView>
 
           <View
@@ -169,13 +206,24 @@ export default function ProjectFeedDetailScreen() {
                 borderTopColor: colors.border,
               },
             ]}>
-            <Pressable
-              style={[styles.cta, { backgroundColor: ACCENT }]}
-              onPress={() =>
-                Alert.alert('Переход к проекту', 'Ссылка на материалы проекта появится после подключения к серверу.')
-              }>
-              <Text style={styles.ctaText}>Перейти к проекту</Text>
-            </Pressable>
+            <View style={styles.footerRow}>
+              <Pressable
+                style={[
+                  styles.cta,
+                  canDelete ? styles.ctaHalf : styles.ctaFull,
+                  { backgroundColor: ACCENT },
+                ]}
+                onPress={openProject}>
+                <Text style={styles.ctaText}>К проекту</Text>
+              </Pressable>
+              {canDelete ? (
+                <Pressable
+                  style={[styles.cta, styles.ctaHalf, { backgroundColor: ACCENT }]}
+                  onPress={confirmDelete}>
+                  <Text style={styles.ctaText}>Удалить</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -299,15 +347,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  visibilityNote: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 10,
+  },
   footer: {
     paddingHorizontal: 20,
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  footerRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   cta: {
-    borderRadius: 14,
+    borderRadius: 22,
     paddingVertical: 16,
     alignItems: 'center',
+  },
+  ctaHalf: {
+    flex: 1,
+  },
+  ctaFull: {
+    flex: 1,
   },
   ctaText: {
     color: '#FFFFFF',

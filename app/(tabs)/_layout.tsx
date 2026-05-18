@@ -1,5 +1,4 @@
 import CheckSquareIcon from '@/assets/images/check-square.svg';
-import CpuTabIcon from '@/assets/images/cpu.svg';
 import TabTasksIcon from '@/assets/images/tab-tasks.svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
@@ -45,6 +44,10 @@ export default function TabLayout() {
     return <Tabs screenOptions={{ tabBarShowLabel: false }} />;
   }
 
+  const role = String(user?.role ?? '').toLowerCase();
+  const isTeacher = role === 'teacher';
+  const isStudent = role === 'student';
+
   return (
     <Tabs
       screenOptions={{
@@ -58,6 +61,10 @@ export default function TabLayout() {
         tabBarItemStyle: styles.tabBarItem,
         headerShown: false,
       }}>
+      {/*
+        Порядок среди видимых вкладок: 1 Профиль → 2 Задачи (студ.) / Задачи по группам (преп.) → 3 Лента → 4–5.
+        href /(tabs)/feed — чтобы не пересекаться с корневыми app/feed/[id] и publish.
+      */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -72,8 +79,24 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tasks"
         options={{
-          href: user?.role === 'student' ? '/tasks' : null,
+          href: isStudent ? '/tasks' : null,
           title: 'Задачи',
+          tabBarIcon: ({ focused, size }) => (
+            <TabBarIconCell focused={focused}>
+              <TabTasksIcon
+                width={size}
+                height={size}
+                color={focused ? iconWhite : inactive}
+              />
+            </TabBarIconCell>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="groupTasks"
+        options={{
+          href: isTeacher ? '/groupTasks' : null,
+          title: 'Задачи по группам',
           tabBarIcon: ({ focused, size }) => (
             <TabBarIconCell focused={focused}>
               <TabTasksIcon
@@ -88,11 +111,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="feed"
         options={{
-          href: user?.role === 'student' ? '/feed' : null,
+          href: isStudent || isTeacher ? '/(tabs)/feed' : null,
           title: 'Лента проектов',
           tabBarIcon: ({ focused, size }) => (
             <TabBarIconCell focused={focused}>
-              <CpuTabIcon width={size} height={size} color={focused ? iconWhite : inactive} />
+              <Ionicons name="newspaper-outline" size={size} color={focused ? iconWhite : inactive} />
             </TabBarIconCell>
           ),
         }}
@@ -100,7 +123,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="shop"
         options={{
-          href: user?.role === 'student' ? '/shop' : null,
+          href: isStudent ? '/shop' : null,
           title: 'Магазин',
           tabBarIcon: ({ focused, size }) => (
             <TabBarIconCell focused={focused}>
@@ -112,7 +135,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          href: user?.role === 'student' ? '/orders' : null,
+          href: isStudent ? '/orders' : null,
           title: 'Заказы',
           tabBarIcon: ({ focused, size }) => (
             <TabBarIconCell focused={focused}>
@@ -128,11 +151,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="groups"
         options={{
-          href: user?.role === 'teacher' ? '/groups' : null,
+          href: isTeacher ? '/groups' : null,
           title: 'Группы',
           tabBarIcon: ({ focused, size }) => (
             <TabBarIconCell focused={focused}>
-              <Ionicons name="people" size={size} color={focused ? iconWhite : inactive} />
+              <Ionicons name="document-text-outline" size={size} color={focused ? iconWhite : inactive} />
             </TabBarIconCell>
           ),
         }}
@@ -140,7 +163,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="coins"
         options={{
-          href: user?.role === 'teacher' ? '/coins' : null,
+          href: isTeacher ? '/coins' : null,
           title: 'Зачисления',
           tabBarIcon: ({ focused, size }) => (
             <TabBarIconCell focused={focused}>

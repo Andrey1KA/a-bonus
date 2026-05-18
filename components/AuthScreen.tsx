@@ -7,7 +7,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface AuthScreenProps {
   onBack: () => void;
-  onSuccess: (login: string, userData: { id: string; role: 'student' | 'teacher' }, password: string) => void;
+  onSuccess: (
+    login: string,
+    userData: { id: string; role: 'student' | 'teacher'; login?: string | null },
+    password: string
+  ) => void;
   userRole: 'student' | 'teacher';
 }
 
@@ -42,6 +46,7 @@ export default function AuthScreen({ onBack, onSuccess, userRole }: AuthScreenPr
         const storeUser = {
           id: data.user.id?.toString() || '',
           role: userRoleFromApi === 'teacher' ? 'teacher' : 'student' as 'student' | 'teacher',
+          login: login.trim().toLowerCase(),
         };
 
         onSuccess(login.trim(), storeUser, password);

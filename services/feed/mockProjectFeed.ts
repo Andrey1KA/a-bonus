@@ -112,6 +112,61 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
   },
 ];
 
+/** Имя автора в демо-ленте преподавателя (совпадает с отображаемым профилем mock-teacher). */
+export const TEACHER_FEED_AUTHOR_NAME = 'Демо Преподаватель';
+
+/**
+ * Отдельная лента для роли преподаватель: видны только проекты, оформленные от его лица.
+ * id с префиксом t- не пересекаются со студенческим моком.
+ */
+export const MOCK_TEACHER_PROJECT_FEED: ProjectFeedItem[] = [
+  {
+    id: 't-p1',
+    authorName: TEACHER_FEED_AUTHOR_NAME,
+    title: 'Шаблон курса «Основы веб-разработки»',
+    body:
+      'Описание: структура модулей, чек-листы для проверки ДЗ и ссылки на материалы для группы 10А.',
+    fullDescription:
+      'Описание: структура модулей, чек-листы для проверки ДЗ и ссылки на материалы для группы 10А.\n\n' +
+      'Внутренний пакет для преподавателя: расписание спринтов, критерии оценивания проектов, примеры хороших работ прошлых лет.',
+    likes: 4,
+    inMyGroup: true,
+    isMine: true,
+    stack: 'HTML, CSS, методичка',
+    meta: '28 марта',
+  },
+  {
+    id: 't-p2',
+    authorName: TEACHER_FEED_AUTHOR_NAME,
+    title: 'Подборка задач по Python для олимпиады',
+    body:
+      'Описание: 12 задач с нарастающей сложностью, тесты и эталонные решения только для преподавателей.',
+    fullDescription:
+      'Описание: 12 задач с нарастающей сложностью, тесты и эталонные решения только для преподавателей.\n\n' +
+      'Файлы разбиты по темам: циклы, списки, словари, работа с файлами. Можно выдавать ученикам подмножество без ключей.',
+    likes: 7,
+    inMyGroup: true,
+    isMine: true,
+    stack: 'Python',
+    meta: '25 марта',
+  },
+  {
+    id: 't-p3',
+    authorName: TEACHER_FEED_AUTHOR_NAME,
+    title: 'Чек-лист проверки итоговых проектов',
+    body:
+      'Описание: единый критерий для ревью UI, кода и документации — чтобы оценки были сопоставимы между группами.',
+    fullDescription:
+      'Описание: единый критерий для ревью UI, кода и документации — чтобы оценки были сопоставимы между группами.\n\n' +
+      'Разделы: функциональность, читаемость, тесты, README, деплой. Баллы и комментарии для обратной связи ученику.',
+    likes: 2,
+    inMyGroup: false,
+    isMine: true,
+    stack: 'Методика',
+    meta: '20 марта',
+  },
+];
+
 export function filterProjectFeedByTab(
   list: ProjectFeedItem[],
   tab: ProjectFeedTab
@@ -122,15 +177,21 @@ export function filterProjectFeedByTab(
 }
 
 export function getProjectFeedItemById(id: string): ProjectFeedItem | undefined {
-  return MOCK_PROJECT_FEED.find((p) => p.id === id);
+  return (
+    MOCK_PROJECT_FEED.find((p) => p.id === id) ??
+    MOCK_TEACHER_PROJECT_FEED.find((p) => p.id === id)
+  );
 }
 
-export function buildPublishedProject(input: {
-  title: string;
-  link: string;
-  description: string;
-  visibility: 'all' | 'group';
-}): ProjectFeedItem {
+export function buildPublishedProject(
+  input: {
+    title: string;
+    link: string;
+    description: string;
+    visibility: 'all' | 'group';
+  },
+  options?: { authorName?: string }
+): ProjectFeedItem {
   const desc = input.description.trim();
   const url = input.link.trim();
   const body = desc || url || 'Описание появится позже.';
@@ -140,7 +201,7 @@ export function buildPublishedProject(input: {
   ].filter(Boolean);
   return {
     id: `pub-${Date.now()}`,
-    authorName: 'Вы',
+    authorName: options?.authorName?.trim() ? options.authorName.trim() : 'Вы',
     title: input.title.trim(),
     body,
     fullDescription: fullParts.length ? fullParts.join('\n\n') : undefined,

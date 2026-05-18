@@ -102,6 +102,14 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="groupTask"
+                options={{
+                  headerShown: false,
+                  animation: 'slide_from_right',
+                  presentation: 'card',
+                }}
+              />
+              <Stack.Screen
                 name="ranks-info"
                 options={{
                   headerShown: false,

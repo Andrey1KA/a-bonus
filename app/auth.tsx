@@ -31,7 +31,11 @@ export default function AuthFlowScreen() {
     setCurrentScreen('welcome');
   };
 
-  const handleAuthSuccess = (loginValue: string, userData: { id: string; role: 'student' | 'teacher' }, password: string) => {
+  const handleAuthSuccess = (
+    loginValue: string,
+    userData: { id: string; role: 'student' | 'teacher'; login?: string | null },
+    password: string
+  ) => {
     dispatch(login({
       user: userData,
       creds: {

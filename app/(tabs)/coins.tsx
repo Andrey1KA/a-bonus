@@ -2,9 +2,12 @@ import CoinsHistoryListItem, { CoinsHistoryListItemDto } from '@/components/coin
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getAllCoinsHistory } from '@/services/coins/coinsApi';
-import React, { useEffect, useState } from 'react';
+import { userSelector } from '@/stores/auth/authStore';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 export type CoinsHistoryData = {
   date: string
@@ -14,6 +17,8 @@ export type CoinsHistoryData = {
 export default function CoinsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const user = useSelector(userSelector);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -21,14 +26,6 @@ export default function CoinsScreen() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const [history, setHistory] = useState<CoinsHistoryData[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      await fetchAllCoinsHistory(0, true);
-      setIsLoading(false);
-    })()
-  }, []);
 
   const fetchAllCoinsHistory = async (page: number = 0, reset: boolean = false) => {
     const { success, data, pagination } = await getAllCoinsHistory(page, 20);
@@ -64,7 +61,34 @@ export default function CoinsScreen() {
         setHasMore(false);
       }
     }
-  }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const role = String(user?.role ?? '').toLowerCase();
+      if (role !== 'teacher' || user?.id == null || String(user.id).trim() === '') {
+        return;
+      }
+      let cancelled = false;
+      void (async () => {
+        setIsLoading(true);
+        const { success, data, pagination } = await getAllCoinsHistory(0, 20);
+        if (!cancelled && success && data) {
+          setHistory(data);
+          if (pagination) {
+            setHasMore(pagination.hasMore);
+            setCurrentPage(pagination.currentPage);
+          } else {
+            setHasMore(false);
+          }
+        }
+        if (!cancelled) setIsLoading(false);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user?.role, user?.id])
+  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

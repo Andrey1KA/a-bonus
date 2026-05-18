@@ -17,7 +17,6 @@ function tryDevMockLogin(
     loginValue: string,
     password: string
 ): { success: boolean; data?: { user: UserDTO }; error?: string } | null {
-    if (!__DEV__) return null;
     const norm = loginValue.trim().toLowerCase();
     if (!password.trim()) return null;
 

@@ -1,7 +1,8 @@
 import { useProjectFeed } from '@/contexts/ProjectFeedContext';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { buildPublishedProject } from '@/services/feed/mockProjectFeed';
+import { buildPublishedProject, TEACHER_FEED_AUTHOR_NAME } from '@/services/feed/mockProjectFeed';
+import { userSelector } from '@/stores/auth/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -17,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 const PURPLE = '#6B6BB3';
 const TOGGLE_INACTIVE_BG = '#EBEBF0';
@@ -31,6 +33,8 @@ export default function PublishProjectScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { addProject } = useProjectFeed();
+  const user = useSelector(userSelector);
+  const isTeacher = String(user?.role ?? '').toLowerCase() === 'teacher';
 
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
@@ -44,12 +48,15 @@ export default function PublishProjectScreen() {
       return;
     }
     addProject(
-      buildPublishedProject({
-        title: name,
-        link,
-        description,
-        visibility,
-      })
+      buildPublishedProject(
+        {
+          title: name,
+          link,
+          description,
+          visibility,
+        },
+        isTeacher ? { authorName: TEACHER_FEED_AUTHOR_NAME } : undefined
+      )
     );
     router.back();
   };

@@ -5,8 +5,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FEED_TABS: { key: ProjectFeedTab; label: string }[] = [
@@ -35,27 +35,8 @@ export default function FeedScreen() {
   const router = useRouter();
   const { items: feedItems, toggleLike, isLiked, getLikeCount } = useProjectFeed();
   const [tab, setTab] = useState<ProjectFeedTab>('all');
-  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
-  const data = useMemo(() => {
-    const list = filterProjectFeedByTab(feedItems, tab);
-    return list.filter((p) => !deletedIds.includes(p.id));
-  }, [feedItems, tab, deletedIds]);
-
-  const confirmDelete = useCallback((projectId: string, projectTitle: string) => {
-    Alert.alert(
-      'Удалить проект?',
-      `«${projectTitle}» будет убран из списка.`,
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: () => setDeletedIds((prev) => (prev.includes(projectId) ? prev : [...prev, projectId])),
-        },
-      ]
-    );
-  }, []);
+  const data = useMemo(() => filterProjectFeedByTab(feedItems, tab), [feedItems, tab]);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -109,7 +90,6 @@ export default function FeedScreen() {
           </Text>
         }
         renderItem={({ item }) => {
-          const isMyProjectsTab = tab === 'myProjects';
           const openDetail = () => router.push(`/feed/${item.id}`);
 
           return (
@@ -118,7 +98,7 @@ export default function FeedScreen() {
                 colors={[...CARD_GRADIENT]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.cardGradient, isMyProjectsTab && styles.cardGradientWithActions]}>
+                style={styles.cardGradient}>
                 <Pressable
                   style={styles.likesCorner}
                   onPress={() => toggleLike(item.id)}
@@ -134,41 +114,15 @@ export default function FeedScreen() {
                   <Text style={[styles.likesText, styles.likesTextGap]}>{getLikeCount(item)}</Text>
                 </Pressable>
 
-                {isMyProjectsTab ? (
-                  <>
-                    <Pressable onPress={openDetail} style={styles.cardPressable}>
-                      <Text style={styles.authorText}>{item.authorName}</Text>
-                      <Text style={styles.cardTitle}>{item.title}</Text>
-                      <Text style={styles.descText} numberOfLines={3}>
-                        {item.body}
-                      </Text>
-                    </Pressable>
-                    <View style={styles.myProjectActions}>
-                      <Pressable
-                        style={styles.editBtn}
-                        onPress={() => Alert.alert('Изменить', 'Редактирование проекта появится позже.')}
-                        accessibilityRole="button"
-                        accessibilityLabel="Изменить проект">
-                        <Text style={styles.editBtnText}>Изменить</Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.deleteBtn}
-                        onPress={() => confirmDelete(item.id, item.title)}
-                        accessibilityRole="button"
-                        accessibilityLabel="Удалить проект">
-                        <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
-                      </Pressable>
-                    </View>
-                  </>
-                ) : (
-                  <Pressable onPress={openDetail} style={({ pressed }) => [styles.cardPressableFull, pressed && { opacity: 0.94 }]}>
-                    <Text style={styles.authorText}>{item.authorName}</Text>
-                    <Text style={styles.cardTitle}>{item.title}</Text>
-                    <Text style={styles.descText} numberOfLines={3}>
-                      {item.body}
-                    </Text>
-                  </Pressable>
-                )}
+                <Pressable
+                  onPress={openDetail}
+                  style={({ pressed }) => [styles.cardPressableFull, pressed && { opacity: 0.94 }]}>
+                  <Text style={styles.authorText}>{item.authorName}</Text>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <Text style={styles.descText} numberOfLines={3}>
+                    {item.body}
+                  </Text>
+                </Pressable>
               </LinearGradient>
             </View>
           );
@@ -261,46 +215,9 @@ const styles = StyleSheet.create({
     paddingRight: 72,
     minHeight: 140,
   },
-  cardGradientWithActions: {
-    paddingBottom: 16,
-    minHeight: 0,
-  },
-  cardPressable: {
-    paddingBottom: 4,
-  },
   cardPressableFull: {
     minHeight: 120,
     paddingBottom: 4,
-  },
-  myProjectActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 14,
-    paddingRight: 0,
-  },
-  editBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  editBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  deleteBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   likesCorner: {
     position: 'absolute',
