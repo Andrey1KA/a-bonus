@@ -1,6 +1,6 @@
 import { UserDTO, UserRole } from '@/services/types';
 import axios from 'axios';
-// first commit in my BRANCH
+//  второй коммит
 // Жестко задаем URL
 const BASE_URL = 'http://localhost:8080';
 
