@@ -78,10 +78,9 @@ export const getAllCoinsHistory = async (
     }
 
     try {
-        const response = await instance.get<PageEnrollmentHistoryDTO>('/api/users/allCoinsHistory', {
+        const response = await instance.get<PageEnrollmentHistoryDTO>('/api/coin-transactions/issued', {
             params: { page, size },
         });
-
 
         const history = response.data.content || [];
         return {
@@ -94,19 +93,60 @@ export const getAllCoinsHistory = async (
             },
         };
     } catch (error: any) {
-        try {
-            const response = await instance.get<EnrollmentHistoryDTO[]>('/api/users/allCoinsHistory');
-            return {
-                success: true,
-                data: groupHistoryByDate(response.data),
-            };
-        } catch (fallbackError: any) {
-            return {
-                success: false,
-                error: fallbackError.response?.data?.message || error.response?.data?.message || 'Ошибка при получении истории начисления коинов',
-                data: []
-            };
-        }
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Ошибка при получении истории начисления коинов',
+            data: []
+        };
+    }
+};
+
+export type StudentCoinHistorySection = {
+    title: string;
+    rows: { desc: string; amount: string }[];
+};
+
+/**
+ * История начислений ученика: GET /api/coin-transactions/{studentId}.
+ */
+export const getStudentCoinsHistory = async (
+    studentId: string,
+    page: number = 0,
+    size: number = 50
+): Promise<{ success: boolean; data: StudentCoinHistorySection[]; error?: string }> => {
+    try {
+        const response = await instance.get<PageEnrollmentHistoryDTO>(`/api/coin-transactions/${studentId}`, {
+            params: { page, size, sortDir: 'desc' },
+        });
+        const history = response.data.content || [];
+        const grouped: Record<string, { desc: string; amount: string }[]> = {};
+
+        history.forEach((item) => {
+            const date = new Date(item.date).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            });
+            if (!grouped[date]) {
+                grouped[date] = [];
+            }
+            const fromTeacher = item.teacher_name?.trim();
+            grouped[date].push({
+                desc: fromTeacher ? `Начисление от ${fromTeacher}` : 'Начисление алгокоинов',
+                amount: `+${item.enrolled_coins} коинов`,
+            });
+        });
+
+        return {
+            success: true,
+            data: Object.entries(grouped).map(([title, rows]) => ({ title, rows })),
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Ошибка при получении истории начислений',
+            data: [],
+        };
     }
 };
 

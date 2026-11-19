@@ -1,6 +1,7 @@
 import StudentRanksTab from '@/components/profile/StudentRanksTab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getStudentCoinsHistory, StudentCoinHistorySection } from '@/services/coins/coinsApi';
 import { getProfileInfo, Profile } from '@/services/profile/profileApi';
 import { logout, userSelector } from '@/stores/auth/authStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,8 +29,8 @@ const STUDENT_TABS: { key: StudentTab; label: string }[] = [
   { key: 'history', label: 'История' },
 ];
 
-/** Демо-история начислений (как в макете «История»). */
-const DEMO_HISTORY_SECTIONS: { title: string; rows: { desc: string; amount: string }[] }[] = [
+/** Демо-история только для входа mock-student, без бэка. */
+const DEMO_HISTORY_SECTIONS: StudentCoinHistorySection[] = [
   {
     title: '14 июня 2026',
     rows: [
@@ -51,6 +52,7 @@ export default function ProfileScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const user = useSelector(userSelector);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [historySections, setHistorySections] = useState<StudentCoinHistorySection[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [studentTab, setStudentTab] = useState<StudentTab>('main');
   const dispatch = useDispatch();
@@ -65,6 +67,24 @@ export default function ProfileScreen() {
       setIsLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== 'student' || !profile?.id) return;
+    if (profile.login === 'mock-student') {
+      setHistorySections(DEMO_HISTORY_SECTIONS);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { success, data } = await getStudentCoinsHistory(profile.id);
+      if (!cancelled && success) {
+        setHistorySections(data);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.role, profile?.id, profile?.login]);
 
   const onLogout = () => {
     dispatch(logout());
@@ -169,7 +189,10 @@ export default function ProfileScreen() {
 
   const renderHistoryTab = () => (
     <View style={styles.historyWrap}>
-      {DEMO_HISTORY_SECTIONS.map((section) => (
+      {historySections.length === 0 ? (
+        <Text style={[styles.mutedText, { color: colors.placeholder }]}>Начислений пока нет</Text>
+      ) : null}
+      {historySections.map((section) => (
         <View key={section.title} style={styles.historySection}>
           <Text style={[styles.historyDate, { color: colors.text }]}>{section.title}</Text>
           <View style={[styles.historyTable, { borderColor: colors.border }]}>

@@ -15,6 +15,15 @@ export interface UserDTO {
   email: string;
   date_of_birth?: string; // format: date
   coins?: number; // readOnly
+  exp?: number; // readOnly
+  rank_level?: number; // readOnly
+}
+
+/** POST /api/coin-transactions. Имена полей как у record на бэке, без snake_case. */
+export interface CreateCoinTransactionRequest {
+  studentId: number;
+  amount: number;
+  description: string;
 }
 
 export interface PageGroupDto {

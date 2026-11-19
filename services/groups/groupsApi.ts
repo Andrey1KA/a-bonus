@@ -5,7 +5,7 @@ import {
   mockGetStudentsByGroup,
   mockGiveCoinsToStudents,
 } from '@/services/groups/mockTeacherGroups';
-import { GroupDTO, PageGroupDto, UserDTO } from '@/services/types';
+import { CreateCoinTransactionRequest, GroupDTO, PageGroupDto, UserDTO } from '@/services/types';
 import { store } from '@/stores/auth/authStore';
 
 /**
@@ -117,10 +117,11 @@ export const getAllStudentsByGroup = async (
 };
 
 
+const COIN_CREDIT_DESCRIPTION = 'Начисление алгокоинов';
+
 /**
- * Зачислить алгокоины студентам
- * Использует новый API для начисления коинов каждому студенту
- * Каждый студент получает количество коинов, указанное в его поле coins
+ * Зачислить алгокоины студентам.
+ * POST /api/coin-transactions: studentId, amount и обязательное описание.
  */
 export const giveCoinsToStudens = async (
     groupId: string,
@@ -131,12 +132,15 @@ export const giveCoinsToStudens = async (
         return mockGiveCoinsToStudents(groupId, studentList);
     }
     try {
-        // Начисляем коины каждому студенту индивидуально
         const promises = studentList
             .filter(student => student.coins && parseInt(student.coins) > 0)
             .map(student => {
-                const coins = parseInt(student.coins);
-                return instance.put<UserDTO>(`/api/users/${student.id}/coins`, coins);
+                const body: CreateCoinTransactionRequest = {
+                    studentId: parseInt(student.id, 10),
+                    amount: parseInt(student.coins, 10),
+                    description: COIN_CREDIT_DESCRIPTION,
+                };
+                return instance.post('/api/coin-transactions', body);
             });
         
         if (promises.length === 0) {

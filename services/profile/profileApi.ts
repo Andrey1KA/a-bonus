@@ -9,8 +9,9 @@ export interface Profile {
     email: string
     birthDate: string
     algocoins: number
-    /** Накопленный опыт (ранги). Пока только демо / будущее поле API. */
+    /** Накопленный опыт из поля exp ответа /api/users/me. */
     experiencePoints?: number
+    rankLevel?: number
 }
 
 /** Профиль без запроса к API при демо-входе (см. authApi tryDevMockLogin). */
@@ -49,6 +50,8 @@ const mapUserDTOToProfile = (userDTO: UserDTO): Profile => {
         email: userDTO.email,
         birthDate: userDTO.date_of_birth || '',
         algocoins: userDTO.coins || 0,
+        experiencePoints: userDTO.exp ?? 0,
+        rankLevel: userDTO.rank_level,
     };
 };
 
